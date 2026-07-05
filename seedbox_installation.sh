@@ -915,6 +915,9 @@ net.ipv4.tcp_limit_output_bytes = 3276800
 net.core.default_qdisc = fq
 net.ipv4.tcp_congestion_control = bbr
 EOF
+
+    rm -f /etc/sysctl.d/99-sysctl.conf
+    ln -s /etc/sysctl.conf /etc/sysctl.d/99-sysctl.conf
     sysctl -p
 	return 0
 }

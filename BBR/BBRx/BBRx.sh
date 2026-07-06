@@ -67,13 +67,31 @@ if [ ! -f /usr/src/linux-headers-$(uname -r)/.config ]; then
     fi
 fi
 
-#BBRx
-wget https://raw.githubusercontent.com/guowanghushifu/Seedbox-Components/main/BBR/BBRx/tcp_bbrx.c
+#bbrx
+if [ ! -r /etc/os-release ]; then
+    echo "Error: Unsupported OS, /etc/os-release not found" >&2
+    exit 1
+fi
+
+. /etc/os-release
+case "$ID:${VERSION_ID%%.*}" in
+    debian:12)
+        bbrx_source_url="https://raw.githubusercontent.com/guowanghushifu/Seedbox-Components/main/BBR/BBRx/tcp_bbrx.c"
+        ;;
+    debian:13)
+        bbrx_source_url="https://raw.githubusercontent.com/guowanghushifu/Seedbox-Components/main/BBR/BBRx/tcp_bbrx_debian13.c"
+        ;;
+    *)
+        echo "Error: Unsupported OS, only Debian 12 and Debian 13 are supported" >&2
+        exit 1
+        ;;
+esac
+wget -O $HOME/tcp_bbrx.c "$bbrx_source_url"
 if [ ! -f $HOME/tcp_bbrx.c ]; then
 	echo "Error: Download failed! Exiting." >&2
 	exit 1
 fi
-# DKMS 模块版本（与内核无关）
+# DKMS 模块版本（与内核无关）。建议固定或使用日期字符串
 module_ver=1.0.0
 algo=bbrx
 
@@ -92,7 +110,7 @@ cat > ./Makefile << EOF
 obj-m:=$bbr_obj
 EOF
 
-    # Create dkms.conf
+# Create dkms.conf（使用 dkms 注入的 kernel_source_dir/ dkms_tree 等变量，确保针对目标内核构建）
 cd ..
 cat > ./dkms.conf << EOF
 PACKAGE_NAME=$algo
